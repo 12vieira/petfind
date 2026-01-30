@@ -124,7 +124,7 @@ export default function Pets() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fffaeb]">
+    <div className="page">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -161,9 +161,9 @@ export default function Pets() {
       </header>
 
       {/* Main */}
-      <main className="max-w-4xl mx-auto px-6 py-12">
+      <main className="container-page py-12">
         <div className="space-y-8">
-          <div className="bg-white rounded-3xl shadow-lg p-8">
+          <div className="card p-8">
             <h2 className="text-3xl font-bold mb-2">Criar Perfil do Pet</h2>
             <p className="text-[#4a5565] mb-6">Preencha as informações do seu pet para encontrar o match perfeito!</p>
 
@@ -172,7 +172,7 @@ export default function Pets() {
                 <div className="md:col-span-1">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Foto principal</label>
                   <div className="relative">
-                    <div className="w-full h-44 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden">
+                    <div className="w-full h-44 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer">
                       {mainPhoto ? (
                         <img src={mainPhoto} alt="main" className="object-cover w-full h-full" />
                       ) : (
@@ -183,9 +183,19 @@ export default function Pets() {
                           <span>Sem foto</span>
                         </div>
                       )}
+
+                      {/* invisible input over the preview so clicking anywhere opens file picker */}
+                      <input
+                        ref={mainPhotoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleMainPhotoChange}
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        aria-label="Selecionar foto principal"
+                      />
                     </div>
 
-                    <input ref={mainPhotoInputRef} type="file" accept="image/*" onChange={handleMainPhotoChange} className="mt-2" />
                     {mainPhoto && (
                       <button type="button" onClick={removeMainPhoto} className="absolute top-2 right-2 bg-white rounded-full p-1 shadow">
                         <X className="size-4 text-gray-600" />
@@ -195,13 +205,13 @@ export default function Pets() {
                 </div>
 
                 <div className="md:col-span-2 space-y-3">
-                  <input type="text" placeholder="Nome do pet" value={formData.nome} onChange={(e) => handleChange('nome', e.target.value)} className="w-full px-4 py-3 border rounded-xl" required />
-                  <textarea rows={3} placeholder="Sobre o seu pet..." value={formData.biografia} onChange={(e) => handleChange('biografia', e.target.value)} className="w-full px-4 py-3 border rounded-xl resize-none" />
+                  <input type="text" placeholder="Nome do pet" value={formData.nome} onChange={(e) => handleChange('nome', e.target.value)} className="input" required />
+                  <textarea rows={3} placeholder="Sobre o seu pet..." value={formData.biografia} onChange={(e) => handleChange('biografia', e.target.value)} className="input resize-none" />
 
                   <div className="grid md:grid-cols-3 gap-3">
-                    <input type="text" placeholder="Raça" value={formData.raca} onChange={(e) => handleChange('raca', e.target.value)} className="px-4 py-3 border rounded-xl" />
-                    <input type="text" placeholder="Idade" value={formData.idade} onChange={(e) => handleChange('idade', e.target.value)} className="px-4 py-3 border rounded-xl" />
-                    <select value={formData.sexo} onChange={(e) => handleChange('sexo', e.target.value)} className="px-4 py-3 border rounded-xl">
+                    <input type="text" placeholder="Raça" value={formData.raca} onChange={(e) => handleChange('raca', e.target.value)} className="input" />
+                    <input type="text" placeholder="Idade" value={formData.idade} onChange={(e) => handleChange('idade', e.target.value)} className="input" />
+                    <select value={formData.sexo} onChange={(e) => handleChange('sexo', e.target.value)} className="input">
                       <option value="macho">Macho</option>
                       <option value="femea">Fêmea</option>
                     </select>
@@ -211,7 +221,7 @@ export default function Pets() {
                     {additionalPhotos.map((p, idx) => (
                       <div key={idx} className="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden relative">
                         {p ? <img src={p} alt={`add-${idx}`} className="w-full h-full object-cover" /> : <div className="flex items-center justify-center h-full text-gray-300">+</div>}
-                        <input ref={(el) => (additionalPhotoRefs.current[idx] = el)} type="file" accept="image/*" onChange={(e) => handleAdditionalPhotoChange(idx, e)} className="absolute inset-0 opacity-0 cursor-pointer" />
+                        <input ref={(el) => (additionalPhotoRefs.current[idx] = el)} type="file" accept="image/*" onChange={(e) => handleAdditionalPhotoChange(idx, e)} onClick={(e) => e.stopPropagation()} className="absolute inset-0 opacity-0 cursor-pointer" />
                         {p && <button type="button" onClick={() => removeAdditionalPhoto(idx)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow"><X className="size-3 text-gray-600" /></button>}
                       </div>
                     ))}
@@ -220,8 +230,8 @@ export default function Pets() {
               </div>
 
               <div className="flex gap-3">
-                <button type="button" onClick={() => { setFormData({ nome: '', especie: 'cachorro', idade: '', sexo: 'macho', raca: '', objetivo: 'amizades', breedingEnabled: false, pedigree: '', registroMedico: '', biografia: '' }); setMainPhoto(null); setAdditionalPhotos([null, null, null, null]); }} className="flex-1 border-2 border-[#ffa98f] text-[#ffa98f] py-3 rounded-xl">Limpar</button>
-                <button type="submit" className="flex-1 bg-gradient-to-r from-[#ffa98f] to-[#ff8566] text-white py-3 rounded-xl">Cadastrar pet</button>
+                <button type="button" onClick={() => { setFormData({ nome: '', especie: 'cachorro', idade: '', sexo: 'macho', raca: '', objetivo: 'amizades', breedingEnabled: false, pedigree: '', registroMedico: '', biografia: '' }); setMainPhoto(null); setAdditionalPhotos([null, null, null, null]); }} className="btn-secondary flex-1">Limpar</button>
+                <button type="submit" className="btn flex-1">Cadastrar pet</button>
               </div>
 
               {message && <p className="mt-3 text-green-600">{message}</p>}
@@ -237,7 +247,7 @@ export default function Pets() {
 
             <div className="mt-4 grid sm:grid-cols-2 md:grid-cols-3 gap-4">
               {pets.map((pet) => (
-                <div key={pet.id} className="bg-white rounded-2xl shadow p-4 hover:shadow-md transition">
+                <div key={pet.id} className="card p-4 card-hover">
                   <div className="w-full h-40 bg-gray-50 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
                     {pet.mainPhoto ? <img src={pet.mainPhoto} alt={pet.name} className="w-full h-full object-cover" /> : <div className="text-gray-300">Sem foto</div>}
                   </div>

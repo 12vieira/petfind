@@ -3,8 +3,5 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/api/me": "pages/api/me.js",
-  "/api/pets": "pages/api/pets.js",
-  "/api/matches": "pages/api/matches.js",
-  "/api/auth/login": "pages/api/auth/login.js",
-  "/api/matches/[id]/messages": "pages/api/matches/[id]/messages.js"
+  "/api/pets": "pages/api/pets.js"
 }
