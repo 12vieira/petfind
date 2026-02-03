@@ -1,10 +1,11 @@
-import { Heart, MessageCircle, User, Plus, X } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
-import { listPets, createPet } from '../src/services/pets';
+import { Plus, X } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/router';
+import { createPet } from '../src/services/pets';
+import Layout from '../src/components/Layout';
 
 export default function Pets() {
-  const [pets, setPets] = useState([]);
-
+  const router = useRouter();
   const [mainPhoto, setMainPhoto] = useState(null);
   const [additionalPhotos, setAdditionalPhotos] = useState([null, null, null, null]);
 
@@ -27,19 +28,9 @@ export default function Pets() {
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function loadPets() {
-    try {
-      const data = await listPets();
-      setPets(data || []);
-    } catch (err) {
-      console.error('Failed to load pets', err);
-    }
-  }
-
-  useEffect(() => {
-    loadPets();
-  }, []);
+  
 
   const handleMainPhotoChange = (e) => {
     const file = e.target.files?.[0];
@@ -91,6 +82,8 @@ export default function Pets() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     setMessage('');
     setError('');
 
@@ -110,58 +103,28 @@ export default function Pets() {
       };
 
       await createPet(petData);
+      setError('');
       setMessage('Pet criado.');
       setFormData({ nome: '', especie: 'cachorro', idade: '', sexo: 'macho', raca: '', objetivo: 'amizades', breedingEnabled: false, pedigree: '', registroMedico: '', biografia: '' });
       setMainPhoto(null);
       setAdditionalPhotos([null, null, null, null]);
       if (mainPhotoInputRef.current) mainPhotoInputRef.current.value = '';
       additionalPhotoRefs.current.forEach((ref) => { if (ref) ref.value = ''; });
-      await loadPets();
+      // After creating, navigate to match-display so the newly created pet appears there
+      router.push('/match-display');
     } catch (err) {
       console.error(err);
+      setMessage('');
       setError(err?.response?.data?.error || 'Falha ao criar pet');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="page">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="size-8">
-              <svg className="block size-full" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                <defs>
-                  <linearGradient id="logo_grad_pets" x1="0" x2="1">
-                    <stop offset="0%" stopColor="#FFA98F" />
-                    <stop offset="100%" stopColor="#FF8566" />
-                  </linearGradient>
-                </defs>
-                <circle cx="16" cy="12" r="6" stroke="url(#logo_grad_pets)" strokeWidth="2.5" fill="rgba(255,168,143,0.06)" />
-                <path d="M10 22c1-2 3-3 6-3s5 1 6 3" stroke="#F6AD55" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-                <circle cx="11.5" cy="11" r="1.2" fill="#FF8566" />
-                <circle cx="20.5" cy="11" r="1.2" fill="#FF8566" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#ffa98f] to-[#ff8566] bg-clip-text text-transparent">PetFind</h1>
-          </div>
-
-          <div className="flex gap-2">
-            <button className="size-12 rounded-xl hover:bg-gray-50">
-              <Heart className="size-6 text-[#4A5565]" />
-            </button>
-            <button className="size-12 rounded-xl hover:bg-gray-50">
-              <MessageCircle className="size-6 text-[#4A5565]" />
-            </button>
-            <button className="size-12 rounded-xl bg-[rgba(255,169,143,0.15)]">
-              <User className="size-6 text-[#FFA98F]" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main */}
-      <main className="container-page py-12">
+    <Layout title="Cadastrar Pet">
+      <div className="min-h-screen bg-[#FFF7F1]">
+        <main className="container-page py-12">
         <div className="space-y-8">
           <div className="card p-8">
             <h2 className="text-3xl font-bold mb-2">Criar Perfil do Pet</h2>
@@ -231,42 +194,18 @@ export default function Pets() {
 
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setFormData({ nome: '', especie: 'cachorro', idade: '', sexo: 'macho', raca: '', objetivo: 'amizades', breedingEnabled: false, pedigree: '', registroMedico: '', biografia: '' }); setMainPhoto(null); setAdditionalPhotos([null, null, null, null]); }} className="btn-secondary flex-1">Limpar</button>
-                <button type="submit" className="btn flex-1">Cadastrar pet</button>
+                <button type="submit" className="btn flex-1" disabled={isSubmitting}>
+                  {isSubmitting ? 'Cadastrando...' : 'Cadastrar pet'}
+                </button>
               </div>
 
               {message && <p className="mt-3 text-green-600">{message}</p>}
               {error && <p className="mt-3 text-red-600">{error}</p>}
             </form>
           </div>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-semibold">Seus Pets</h3>
-              <span className="badge">Total: {pets.length}</span>
-            </div>
-
-            <div className="mt-4 grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {pets.map((pet) => (
-                <div key={pet.id} className="card p-4 card-hover">
-                  <div className="w-full h-40 bg-gray-50 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
-                    {pet.mainPhoto ? <img src={pet.mainPhoto} alt={pet.name} className="w-full h-full object-cover" /> : <div className="text-gray-300">Sem foto</div>}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-lg">{pet.name || pet.nome}</div>
-                      <div className="text-sm text-gray-500">{pet.breed || pet.raca || pet.species}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button className="p-2 rounded-lg hover:bg-gray-50"><Heart className="text-pink-500" /></button>
-                      <button className="p-2 rounded-lg hover:bg-gray-50"><MessageCircle className="text-gray-500" /></button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </Layout>
   );
 }

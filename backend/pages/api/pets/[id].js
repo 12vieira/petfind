@@ -10,10 +10,14 @@ const updateSchema = z.object({
   species: z.string().min(1).optional(),
   breed: z.string().optional().nullable(),
   sex: z.string().optional().nullable(),
-  ageMonths: z.number().int().nonnegative().optional().nullable(),
+  ageMonths: z.coerce.number().int().nonnegative().optional().nullable(),
+  age: z.coerce.number().int().nonnegative().optional().nullable(),
   description: z.string().optional().nullable(),
+  bio: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   state: z.string().optional().nullable(),
+  mainPhoto: z.string().optional().nullable(),
+  additionalPhotos: z.array(z.string()).optional().nullable(),
 });
 
 export default async function handler(req, res) {
@@ -56,10 +60,12 @@ export default async function handler(req, res) {
         ...data,
         breed: data.breed ?? pet.breed,
         sex: data.sex ?? pet.sex,
-        ageMonths: data.ageMonths ?? pet.ageMonths,
-        description: data.description ?? pet.description,
+        ageMonths: data.ageMonths ?? data.age ?? pet.ageMonths,
+        description: data.description ?? data.bio ?? pet.description,
         city: data.city ?? pet.city,
         state: data.state ?? pet.state,
+        mainPhoto: data.mainPhoto ?? pet.mainPhoto,
+        additionalPhotos: data.additionalPhotos ?? pet.additionalPhotos,
       });
 
       return res.json(pet);

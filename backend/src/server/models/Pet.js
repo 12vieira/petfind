@@ -41,6 +41,15 @@ function initPetModel(sequelize) {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      mainPhoto: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      additionalPhotos: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        defaultValue: [],
+      },
       city: {
         type: DataTypes.STRING,
         allowNull: true,

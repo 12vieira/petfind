@@ -10,10 +10,14 @@ const createSchema = z.object({
   species: z.string().min(1),
   breed: z.string().optional().nullable(),
   sex: z.string().optional().nullable(),
-  ageMonths: z.number().int().nonnegative().optional().nullable(),
+  ageMonths: z.coerce.number().int().nonnegative().optional().nullable(),
+  age: z.coerce.number().int().nonnegative().optional().nullable(),
   description: z.string().optional().nullable(),
+  bio: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   state: z.string().optional().nullable(),
+  mainPhoto: z.string().optional().nullable(),
+  additionalPhotos: z.array(z.string()).optional().nullable(),
 });
 
 export default async function handler(req, res) {
@@ -46,10 +50,12 @@ export default async function handler(req, res) {
         species: data.species,
         breed: data.breed || null,
         sex: data.sex || null,
-        ageMonths: data.ageMonths ?? null,
-        description: data.description || null,
+        ageMonths: data.ageMonths ?? data.age ?? null,
+        description: data.description ?? data.bio ?? null,
         city: data.city || null,
         state: data.state || null,
+        mainPhoto: data.mainPhoto || null,
+        additionalPhotos: data.additionalPhotos || [],
       });
 
       return res.status(201).json(pet);

@@ -1,10 +1,18 @@
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { getMe, logoutUser } from '../services/auth';
 import { Menu, X, Home, MessageCircle, User } from 'lucide-react';
 
 export default function Header() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);
+
+  const path = router.pathname;
+  const isHome = path === '/';
+  const isChat = path.startsWith('/chat');
+  const isProfile = path.startsWith('/tutor-profile') || path.startsWith('/tutor-edit');
 
   useEffect(() => {
     async function loadUser() {
@@ -28,7 +36,7 @@ export default function Header() {
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <div className="size-8">
               {/* Inline fallback logo (removed external svg import) */}
               <svg className="block size-full" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden>
@@ -48,19 +56,37 @@ export default function Header() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-[#ffa98f] to-[#ff8566] bg-clip-text text-transparent">
               PetFind
             </h1>
-          </div>
+          </Link>
 
           {/* Navigation */}
           <div className="hidden md:flex items-center gap-2">
-            <button className="size-12 rounded-xl bg-[rgba(255,169,143,0.13)] flex items-center justify-center hover:bg-[rgba(255,169,143,0.2)] transition-colors">
-              <Home className="size-6 text-[#FFA98F]" />
-            </button>
-            <button className="size-12 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-colors">
-              <MessageCircle className="size-6 text-[#4A5565]" />
-            </button>
-            <button className="size-12 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-colors">
-              <User className="size-6 text-[#4A5565]" />
-            </button>
+            <Link
+              href="/"
+              className={`size-12 rounded-xl flex items-center justify-center transition-colors ${
+                isHome ? 'bg-[rgba(255,169,143,0.13)] hover:bg-[rgba(255,169,143,0.2)]' : 'hover:bg-gray-50'
+              }`}
+              aria-label="Início"
+            >
+              <Home className={`size-6 ${isHome ? 'text-[#FFA98F]' : 'text-[#4A5565]'}`} />
+            </Link>
+            <Link
+              href="/chat-on"
+              className={`size-12 rounded-xl flex items-center justify-center transition-colors ${
+                isChat ? 'bg-[rgba(255,169,143,0.13)] hover:bg-[rgba(255,169,143,0.2)]' : 'hover:bg-gray-50'
+              }`}
+              aria-label="Chat"
+            >
+              <MessageCircle className={`size-6 ${isChat ? 'text-[#FFA98F]' : 'text-[#4A5565]'}`} />
+            </Link>
+            <Link
+              href="/tutor-profile"
+              className={`size-12 rounded-xl flex items-center justify-center transition-colors ${
+                isProfile ? 'bg-[rgba(255,169,143,0.13)] hover:bg-[rgba(255,169,143,0.2)]' : 'hover:bg-gray-50'
+              }`}
+              aria-label="Perfil"
+            >
+              <User className={`size-6 ${isProfile ? 'text-[#FFA98F]' : 'text-[#4A5565]'}`} />
+            </Link>
           </div>
         </div>
       </header>
