@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { Plus, X } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/router';
@@ -7,7 +8,9 @@ import Layout from '../src/components/Layout';
 export default function Pets() {
   const router = useRouter();
   const [mainPhoto, setMainPhoto] = useState(null);
+  const [mainPhotoFile, setMainPhotoFile] = useState(null);
   const [additionalPhotos, setAdditionalPhotos] = useState([null, null, null, null]);
+  const [additionalPhotoFiles, setAdditionalPhotoFiles] = useState([null, null, null, null]);
 
   const mainPhotoInputRef = useRef(null);
   const additionalPhotoRefs = useRef([]);
@@ -36,6 +39,8 @@ export default function Pets() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setMainPhotoFile(file);
+
     const reader = new FileReader();
     reader.onloadend = () => setMainPhoto(reader.result);
     reader.readAsDataURL(file);
@@ -44,6 +49,12 @@ export default function Pets() {
   const handleAdditionalPhotoChange = (index, e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setAdditionalPhotoFiles((prev) => {
+      const updated = [...prev];
+      updated[index] = file;
+      return updated;
+    });
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -66,6 +77,7 @@ export default function Pets() {
 
   const removeMainPhoto = () => {
     setMainPhoto(null);
+    setMainPhotoFile(null);
     if (mainPhotoInputRef.current) mainPhotoInputRef.current.value = '';
   };
 
@@ -73,6 +85,11 @@ export default function Pets() {
     const updated = [...additionalPhotos];
     updated[index] = null;
     setAdditionalPhotos(updated);
+    setAdditionalPhotoFiles((prev) => {
+      const next = [...prev];
+      next[index] = null;
+      return next;
+    });
     if (additionalPhotoRefs.current[index]) additionalPhotoRefs.current[index].value = '';
   };
 
@@ -88,26 +105,25 @@ export default function Pets() {
     setError('');
 
     try {
-      const petData = {
-        name: formData.nome,
-        species: formData.especie,
-        age: formData.idade,
-        sex: formData.sexo,
-        breed: formData.raca,
-        objective: formData.objetivo,
-        pedigree: formData.pedigree,
-        registroMedico: formData.registroMedico,
-        bio: formData.biografia,
-        mainPhoto: mainPhoto || '',
-        additionalPhotos: additionalPhotos.filter(Boolean)
-      };
+      const form = new FormData();
+      form.append('name', formData.nome);
+      form.append('species', formData.especie);
+      form.append('ageMonths', formData.idade || '');
+      form.append('sex', formData.sexo);
+      form.append('breed', formData.raca);
+      form.append('description', formData.biografia);
 
-      await createPet(petData);
+      if (mainPhotoFile) form.append('mainPhoto', mainPhotoFile);
+      additionalPhotoFiles.filter(Boolean).forEach((file) => form.append('additionalPhotos', file));
+
+      await createPet(form);
       setError('');
       setMessage('Pet criado.');
       setFormData({ nome: '', especie: 'cachorro', idade: '', sexo: 'macho', raca: '', objetivo: 'amizades', breedingEnabled: false, pedigree: '', registroMedico: '', biografia: '' });
       setMainPhoto(null);
+      setMainPhotoFile(null);
       setAdditionalPhotos([null, null, null, null]);
+      setAdditionalPhotoFiles([null, null, null, null]);
       if (mainPhotoInputRef.current) mainPhotoInputRef.current.value = '';
       additionalPhotoRefs.current.forEach((ref) => { if (ref) ref.value = ''; });
       // After creating, navigate to match-display so the newly created pet appears there

@@ -90,29 +90,40 @@ export default function PerfilTutor({
 
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <h3 className="text-2xl font-bold mb-6">Meus Pets ({pets.length})</h3>
-
-            {pets.map(pet => (
-              <div key={pet.id} className="border rounded-2xl p-6 mb-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h4 className="font-bold">{pet.nome}</h4>
-                    <p>{pet.raca} • {pet.tipo}</p>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button onClick={() => handleEditarPet(pet.id)}>
-                      <Edit className="text-[#FFA98F]" />
-                    </button>
-                    <button onClick={() => handleExcluirPet(pet.id)}>
-                      <Trash2 className="text-[#FFA98F]" />
-                    </button>
-                  </div>
-                </div>
-
-                <p className="mt-2 text-sm">Idade: {pet.idade}</p>
-                <p className="text-sm">Sexo: {pet.sexo}</p>
+            {pets.length === 0 ? (
+              <div className="card p-6 text-center">
+                <p className="text-slate-600">Você ainda não cadastrou pets.</p>
+                <button
+                  onClick={() => router.push('/pet-register')}
+                  className="mt-4 btn"
+                >
+                  Cadastrar pet
+                </button>
               </div>
-            ))}
+            ) : (
+              pets.map((pet) => (
+                <div key={pet.id} className="border rounded-2xl p-6 mb-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-bold">{pet.nome}</h4>
+                      <p>{pet.raca} • {pet.tipo}</p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button onClick={() => handleEditarPet(pet.id)}>
+                        <Edit className="text-[#FFA98F]" />
+                      </button>
+                      <button onClick={() => handleExcluirPet(pet.id)}>
+                        <Trash2 className="text-[#FFA98F]" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="mt-2 text-sm">Idade: {pet.idade}</p>
+                  <p className="text-sm">Sexo: {pet.sexo}</p>
+                </div>
+              ))
+            )}
           </div>
 
         </main>

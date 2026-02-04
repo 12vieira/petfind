@@ -4,6 +4,7 @@ const { initMatchModel } = require('../../../src/server/models/Match');
 const { getTokenFromRequest, verifyToken } = require('../../../src/server/auth/jwt');
 const { Op } = require('sequelize');
 const { applyCors } = require('../../../src/server/http/cors');
+const { toMatchDtoList } = require('../../../src/server/dto/match');
 
 export default async function handler(req, res) {
   if (applyCors(req, res)) return;
@@ -40,8 +41,12 @@ export default async function handler(req, res) {
       order: [['createdAt', 'DESC']],
     });
 
-    return res.json(matches);
+    return res.json(toMatchDtoList(matches));
   } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'Server error' });
   }
 }

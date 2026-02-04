@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React, { useState, useRef } from 'react';
 import Layout from '../src/components/Layout';
 import { Plus, X } from 'lucide-react';
@@ -8,7 +9,9 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
   const router = useRouter();
 
   const [mainPhoto, setMainPhoto] = useState(null);
+  const [mainPhotoFile, setMainPhotoFile] = useState(null);
   const [additionalPhotos, setAdditionalPhotos] = useState([null, null, null, null]);
+  const [additionalPhotoFiles, setAdditionalPhotoFiles] = useState([null, null, null, null]);
 
   const mainPhotoInputRef = useRef(null);
   const additionalPhotoRefs = useRef([]);
@@ -33,6 +36,8 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setMainPhotoFile(file);
+
     const reader = new FileReader();
     reader.onloadend = () => setMainPhoto(reader.result);
     reader.readAsDataURL(file);
@@ -41,6 +46,12 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
   const handleAdditionalPhotoChange = (index, e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setAdditionalPhotoFiles((prev) => {
+      const updated = [...prev];
+      updated[index] = file;
+      return updated;
+    });
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -61,6 +72,7 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
 
   const removeMainPhoto = () => {
     setMainPhoto(null);
+    setMainPhotoFile(null);
     if (mainPhotoInputRef.current) mainPhotoInputRef.current.value = '';
   };
 
@@ -68,6 +80,11 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
     const newPhotos = [...additionalPhotos];
     newPhotos[index] = null;
     setAdditionalPhotos(newPhotos);
+    setAdditionalPhotoFiles((prev) => {
+      const next = [...prev];
+      next[index] = null;
+      return next;
+    });
     if (additionalPhotoRefs.current[index]) additionalPhotoRefs.current[index].value = '';
   };
 
@@ -77,20 +94,25 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = {
-      ...formData,
-      mainPhoto: mainPhoto || '',
-      additionalPhotos: additionalPhotos.filter(Boolean),
-    };
+    const form = new FormData();
+    form.append('name', formData.nome);
+    form.append('species', formData.especie);
+    form.append('ageMonths', formData.idade || '');
+    form.append('sex', formData.sexo);
+    form.append('breed', formData.raca);
+    form.append('description', formData.biografia);
+
+    if (mainPhotoFile) form.append('mainPhoto', mainPhotoFile);
+    additionalPhotoFiles.filter(Boolean).forEach((file) => form.append('additionalPhotos', file));
 
     // Persist to backend if service available, otherwise fall back to callbacks
     (async () => {
       try {
         if (createPet) {
-          await createPet(payload);
+          await createPet(form);
         }
         if (onPetCadastrado) {
-          onPetCadastrado(payload);
+          onPetCadastrado(formData);
         } else if (onNavigateToInicioMatch) {
           onNavigateToInicioMatch();
         } else {
@@ -149,7 +171,7 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
                       <div className="grid grid-cols-4 gap-2">
                         {additionalPhotos.map((p, i) => (
                           <div key={i} className="relative w-full pb-[100%] bg-slate-50 rounded-lg overflow-hidden">
-                            {p ? <img src={p} className="absolute inset-0 w-full h-full object-cover" /> : <div className="absolute inset-0 flex items-center justify-center text-gray-300">+</div>}
+                            {p ? <img src={p} alt="Foto do pet" className="absolute inset-0 w-full h-full object-cover" /> : <div className="absolute inset-0 flex items-center justify-center text-gray-300">+</div>}
                             <input ref={(el) => (additionalPhotoRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => handleAdditionalPhotoChange(i, e)} onClick={(e) => e.stopPropagation()} className="absolute inset-0 opacity-0 cursor-pointer" />
                             {p && (
                               <button type="button" onClick={() => removeAdditionalPhoto(i)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow">

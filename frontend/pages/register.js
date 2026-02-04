@@ -1,7 +1,8 @@
-import { Home, MessageCircle, User, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { registerUser } from '../src/services/auth';
 import { useRouter } from 'next/router';
+import Layout from '../src/components/Layout';
 
 export default function Register() {
   const router = useRouter();
@@ -51,50 +52,9 @@ export default function Register() {
   const onNavigateToLogin = () => router.push('/login');
 
   return (
-    <div className="min-h-screen bg-[#FFF7F1]">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="size-8">
-              {/* Inline fallback logo (removed external svg import) */}
-              <svg className="block size-full" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                <defs>
-                  <linearGradient id="logo_grad" x1="0" x2="1">
-                    <stop offset="0%" stopColor="#FFA98F" />
-                    <stop offset="100%" stopColor="#FF8566" />
-                  </linearGradient>
-                </defs>
-                <circle cx="16" cy="12" r="6" stroke="url(#logo_grad)" strokeWidth="2.5" fill="rgba(255,168,143,0.06)" />
-                <path d="M10 22c1-2 3-3 6-3s5 1 6 3" stroke="#F6AD55" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-                <circle cx="11.5" cy="11" r="1.2" fill="#FF8566" />
-                <circle cx="20.5" cy="11" r="1.2" fill="#FF8566" />
-              </svg>
-            </div>
-
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#ffa98f] to-[#ff8566] bg-clip-text text-transparent">
-              PetFind
-            </h1>
-          </div>
-
-          {/* Navigation */}
-          <div className="hidden md:flex items-center gap-2">
-            <button className="size-12 rounded-xl bg-[rgba(255,169,143,0.13)] flex items-center justify-center hover:bg-[rgba(255,169,143,0.2)] transition-colors">
-              <Home className="size-6 text-[#FFA98F]" />
-            </button>
-            <button className="size-12 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-colors">
-              <MessageCircle className="size-6 text-[#4A5565]" />
-            </button>
-            <button className="size-12 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-colors">
-              <User className="size-6 text-[#4A5565]" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main */}
-      <main className="max-w-md mx-auto px-6 py-12">
+    <Layout title="Criar Conta">
+      <div className="min-h-screen bg-[#FFF7F1]">
+        <main className="max-w-md mx-auto px-6 py-12">
         <div className="space-y-8">
           <button
             onClick={onNavigateToHome}
@@ -173,8 +133,9 @@ export default function Register() {
             {error && <p className="mt-3 text-red-600">{error}</p>}
           </div>
         </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </Layout>
   );
 }
 

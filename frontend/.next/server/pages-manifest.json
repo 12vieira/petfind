@@ -3,11 +3,6 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/match-display": "pages/match-display.js",
-  "/login": "pages/login.js",
-  "/pets": "pages/pets.js",
-  "/": "pages/index.js",
-  "/register": "pages/register.js",
-  "/chat-on": "pages/chat-on.js",
   "/tutor-profile": "pages/tutor-profile.js",
-  "/tutor-edit": "pages/tutor-edit.js"
+  "/chat-on": "pages/chat-on.js"
 }

@@ -14,7 +14,7 @@ Rápido start (Windows / PowerShell):
 ```powershell
 cd backend
 npm install
-# criar .env.local a partir de .env.example e ajustar DATABASE_URL
+# criar .env.local a partir de .env.example e ajustar DATABASE_URL/FRONTEND_URLS
 npm run dev
 ```
 
@@ -41,6 +41,10 @@ npm run db:migrate
 Portas:
 - Backend: http://localhost:4000
 - Frontend: http://localhost:5423
+
+Uploads de imagens:
+- Arquivos são salvos em `backend/public/uploads`
+- URLs são servidas pelo backend em `http://localhost:4000/uploads/<arquivo>`
 
 Páginas disponíveis:
 - / (home)
@@ -73,7 +77,27 @@ Endpoints (Backend API):
 - GET /api/matches/:id/messages
 - POST /api/matches/:id/messages
 
+Resposta de `POST /api/pets/:id/like` (exemplo):
+```json
+{
+	"message": "Match created",
+	"matched": true,
+	"match": {
+		"id": 1,
+		"petAId": 10,
+		"petBId": 20,
+		"status": "active",
+		"createdAt": "2026-02-03T10:00:00.000Z",
+		"updatedAt": "2026-02-03T10:00:00.000Z"
+	}
+}
+```
+
+Env de CORS:
+- `FRONTEND_URLS` aceita múltiplas origens separadas por vírgula.
+	Ex: `FRONTEND_URLS=http://localhost:5423,http://localhost:3000`
+
 Próximos passos sugeridos:
-- Adicionar `docker-compose.yml` para PostgreSQL
-- Criar migrations (Knex/TypeORM/Prisma)
-- Implementar rotas e páginas iniciais
+- Adicionar storage externo para uploads (S3/GCS)
+- Documentar API com OpenAPI/Swagger
+- Adicionar testes de integração para auth e pets

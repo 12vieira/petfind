@@ -3,6 +3,7 @@ const { ensureDatabase } = require('../../../../src/server/db');
 const { initPetModel } = require('../../../../src/server/models/Pet');
 const { initLikeModel } = require('../../../../src/server/models/Like');
 const { initMatchModel } = require('../../../../src/server/models/Match');
+const { toMatchDto } = require('../../../../src/server/dto/match');
 const { getTokenFromRequest, verifyToken } = require('../../../../src/server/auth/jwt');
 const { applyCors } = require('../../../../src/server/http/cors');
 
@@ -55,7 +56,7 @@ export default async function handler(req, res) {
     });
 
     if (existingLike) {
-      return res.status(200).json({ message: 'Already liked' });
+      return res.status(200).json({ message: 'Already liked', matched: false });
     }
 
     await Like.create({ fromPetId: data.fromPetId, toPetId });
@@ -79,16 +80,21 @@ export default async function handler(req, res) {
 
         return res.status(201).json({
           message: 'Match created',
-          match,
+          matched: true,
+          match: toMatchDto(match),
         });
       }
     }
 
-    return res.status(201).json({ message: 'Like created' });
+    return res.status(201).json({ message: 'Like created', matched: false });
   } catch (err) {
     if (err.name === 'ZodError') {
       return res.status(400).json({ error: 'Invalid input', details: err.errors });
     }
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'Server error' });
   }
 }

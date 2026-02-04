@@ -1,9 +1,12 @@
+/* eslint-disable @next/next/no-img-element */
 import { Send, Paperclip, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Layout from '../src/components/Layout';
 import { listMessages, sendMessage, listMatches } from '../src/services/matches';
 
 export default function ChatOn() {
+  const router = useRouter();
   const [activeConversation, setActiveConversation] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const [showPedigreeModal, setShowPedigreeModal] = useState(false);
@@ -27,7 +30,15 @@ export default function ChatOn() {
         const data = await listMatches();
         if (!mounted) return;
         // backend returns matches — we map to a lightweight conversation structure
-        const mapped = data.map((m) => ({ id: m.id, petAId: m.petAId, petBId: m.petBId, createdAt: m.createdAt }));
+        const mapped = data.map((m) => ({
+          id: m.id,
+          petAId: m.petAId,
+          petBId: m.petBId,
+          createdAt: m.createdAt,
+          name: `Match #${m.id}`,
+          lastMessage: 'Conversa iniciada',
+          time: m.createdAt ? new Date(m.createdAt).toLocaleDateString('pt-BR') : ''
+        }));
         setConversations(mapped);
         if (mapped.length > 0 && activeConversation === null) setActiveConversation(mapped[0].id);
       } catch (err) {
@@ -36,7 +47,7 @@ export default function ChatOn() {
     }
     load();
     return () => { mounted = false; };
-  }, []);
+  }, [activeConversation]);
 
   // Poll messages for the active conversation
   useEffect(() => {
@@ -123,6 +134,8 @@ export default function ChatOn() {
     setPedigreeFile(null);
   };
 
+  const hasConversations = conversations.length > 0;
+
   return (
     <Layout title="Chat">
       <div className="min-h-screen bg-[#FFF7F1] flex flex-col">
@@ -130,72 +143,106 @@ export default function ChatOn() {
         <div className="grid md:grid-cols-3 gap-6 h-full">
           {/* Conversations list */}
           <div className="md:col-span-1 bg-white border border-slate-200 rounded-2xl p-4 overflow-y-auto" style={{ maxHeight: '70vh' }}>
-            <div className="space-y-3">
-              {conversations.map((c) => (
+            {!hasConversations ? (
+              <div className="text-center py-6">
+                <p className="text-slate-600">Nenhuma conversa ainda.</p>
                 <button
-                  key={c.id}
-                  onClick={() => setActiveConversation(c.id)}
-                  className={`w-full text-left p-3 rounded-xl flex items-center gap-3 hover:bg-slate-50 ${activeConversation === c.id ? 'ring-2 ring-amber-200' : ''}`}
+                  onClick={() => router.push('/match-display')}
+                  className="mt-4 btn"
                 >
-                  <img src={c.avatar} alt={c.name} className="w-12 h-12 rounded-full object-cover" />
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center">
-                      <div className="font-semibold">{c.name}</div>
-                      <div className="text-xs text-gray-400">{c.time}</div>
-                    </div>
-                    <div className="text-sm text-gray-500 truncate">{c.lastMessage}</div>
-                    <div className="text-xs text-gray-400 mt-1">{c.location}</div>
-                  </div>
+                  Buscar matches
                 </button>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {conversations.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setActiveConversation(c.id)}
+                    className={`w-full text-left p-3 rounded-xl flex items-center gap-3 hover:bg-slate-50 ${activeConversation === c.id ? 'ring-2 ring-amber-200' : ''}`}
+                  >
+                    {c.avatar ? (
+                      <img src={c.avatar} alt={c.name} className="w-12 h-12 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold">
+                        M
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center">
+                        <div className="font-semibold">{c.name}</div>
+                        <div className="text-xs text-gray-400">{c.time}</div>
+                      </div>
+                      <div className="text-sm text-gray-500 truncate">{c.lastMessage}</div>
+                      <div className="text-xs text-gray-400 mt-1">Pets {c.petAId} & {c.petBId}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Messages area */}
           <div className="md:col-span-2 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col" style={{ minHeight: '70vh' }}>
-            <div className="flex items-center gap-4 border-b pb-3 mb-3">
-              <img src={activeConv?.avatar} alt={activeConv?.name} className="w-12 h-12 rounded-full object-cover" />
-              <div>
-                <div className="font-semibold">{activeConv?.name}</div>
-                <div className="text-sm text-gray-500">{activeConv?.breed} • {activeConv?.location}</div>
+            {!hasConversations ? (
+              <div className="flex-1 flex items-center justify-center text-center">
+                <div>
+                  <h3 className="text-lg font-semibold">Sem conversas</h3>
+                  <p className="text-slate-600 mt-2">Curta um pet para iniciar um chat.</p>
+                  <button onClick={() => router.push('/match-display')} className="mt-4 btn">Ir para Match</button>
+                </div>
               </div>
-              <div className="ml-auto text-sm text-gray-400">{activeConv?.time}</div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-2" id="messages">
-              <div className="space-y-3">
-                {messages.map((m) => (
-                  <div key={m.id} className={`flex ${m.isSent ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`${m.isSent ? 'bg-amber-100 text-slate-900' : 'bg-slate-100 text-slate-900'} rounded-2xl p-3 max-w-[70%]`}> 
-                      <div className="text-sm">{m.text}</div>
-                      <div className="text-xs text-gray-400 mt-1 text-right">{m.time}</div>
-                    </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-4 border-b pb-3 mb-3">
+                  {activeConv?.avatar ? (
+                    <img src={activeConv?.avatar} alt={activeConv?.name} className="w-12 h-12 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold">M</div>
+                  )}
+                  <div>
+                    <div className="font-semibold">{activeConv?.name || 'Match'}</div>
+                    <div className="text-sm text-gray-500">Pets {activeConv?.petAId} • {activeConv?.petBId}</div>
                   </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-            </div>
+                  <div className="ml-auto text-sm text-gray-400">{activeConv?.time}</div>
+                </div>
 
-            <div className="mt-3 pt-3 border-t">
-              <div className="flex items-center gap-2">
-                <button onClick={() => fileInputRef.current && fileInputRef.current.click()} className="p-2 rounded-lg hover:bg-slate-50">
-                  <Paperclip />
-                </button>
-                <input ref={fileInputRef} type="file" accept="*" onChange={handleFileUpload} onClick={(e) => e.stopPropagation()} className="hidden" />
+                <div className="flex-1 overflow-y-auto px-2" id="messages">
+                  <div className="space-y-3">
+                    {messages.map((m) => (
+                      <div key={m.id} className={`flex ${m.isSent ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`${m.isSent ? 'bg-amber-100 text-slate-900' : 'bg-slate-100 text-slate-900'} rounded-2xl p-3 max-w-[70%]`}>
+                          <div className="text-sm">{m.text}</div>
+                          <div className="text-xs text-gray-400 mt-1 text-right">{m.time}</div>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </div>
 
-                <textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Digite sua mensagem..."
-                  className="flex-1 input resize-none h-12"
-                />
+                <div className="mt-3 pt-3 border-t">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => fileInputRef.current && fileInputRef.current.click()} className="p-2 rounded-lg hover:bg-slate-50">
+                      <Paperclip />
+                    </button>
+                    <input ref={fileInputRef} type="file" accept="*" onChange={handleFileUpload} onClick={(e) => e.stopPropagation()} className="hidden" />
 
-                <button onClick={handleSendMessage} className="btn">
-                  <Send />
-                </button>
-              </div>
-            </div>
+                    <textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      placeholder="Digite sua mensagem..."
+                      className="flex-1 input resize-none h-12"
+                    />
+
+                    <button onClick={handleSendMessage} className="btn">
+                      <Send />
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
         </main>

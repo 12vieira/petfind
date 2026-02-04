@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import Header from '../src/components/Header';
+import Layout from '../src/components/Layout';
 import { loginUser } from '../src/services/auth';
 import { useRouter } from 'next/router';
-import { Home, MessageCircle, User, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export default function Login() {
   const router = useRouter();
@@ -27,10 +27,9 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF7F1]">
-      <Header />
-
-      <main className="max-w-md mx-auto px-6 py-20">
+    <Layout title="Entrar">
+      <div className="min-h-screen bg-[#FFF7F1]">
+        <main className="max-w-md mx-auto px-6 py-20">
         <div className="space-y-8">
           <div className="space-y-6">
             <button
@@ -112,8 +111,9 @@ export default function Login() {
             {error && <p className="mt-3 text-red-600">{error}</p>}
           </div>
         </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </Layout>
   );
 }
 

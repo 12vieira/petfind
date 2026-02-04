@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, User, MapPin, X, Sparkles } from 'lucide-react';
 import { likePet } from '../src/services/matches';
@@ -25,6 +26,7 @@ export default function MatchDisplay({
 
   const currentProfile = pets[currentIndex];
   const hasMoreProfiles = currentIndex < pets.length - 1;
+  const noProfiles = !loading && !error && pets.length === 0;
 
   useEffect(() => {
     let mounted = true;
@@ -155,6 +157,10 @@ export default function MatchDisplay({
     router.push('/chat-on');
   };
 
+  const handleGoRegister = () => {
+    router.push('/pet-register');
+  };
+
   const handleGoPerfil = () => {
     if (onNavigateToPerfil) return onNavigateToPerfil();
     router.push('/tutor-profile');
@@ -184,20 +190,20 @@ export default function MatchDisplay({
               }`}
             >
               <div className="h-96 rounded-t-2xl overflow-hidden relative">
-                <img src={getImageUrl(currentProfile)} alt={currentProfile.name} className="w-full h-full object-cover" />
+                <img src={getImageUrl(currentProfile)} alt={currentProfile.name || 'Pet'} className="w-full h-full object-cover" />
               </div>
 
               <div className="p-5">
                 <h2 className="text-2xl font-bold">
-                  {currentProfile.name}, {currentProfile.age}
+                  {currentProfile.name || 'Pet'}, {currentProfile.age || '-'}
                 </h2>
 
                 <div className="flex items-center gap-2 text-sm text-[#4a5565]">
                   <MapPin className="size-4" />
-                  {currentProfile.location}
+                  {currentProfile.location || 'Localização não informada'}
                 </div>
 
-                <p className="mt-3 text-sm">{currentProfile.description}</p>
+                <p className="mt-3 text-sm">{currentProfile.description || 'Sem descrição.'}</p>
 
                 {currentProfile.hasLikedYou && (
                   <div className="mt-3 flex items-center gap-1 text-[#ffa98f]">
@@ -217,6 +223,17 @@ export default function MatchDisplay({
                 <Heart className="size-10 text-white fill-white" />
               </button>
             </div>
+          </div>
+        ) : noProfiles ? (
+          <div className="text-center max-w-md">
+            <h2 className="text-2xl font-bold mb-2">Nenhum perfil disponível</h2>
+            <p className="text-slate-600">Cadastre um pet para começar a encontrar matches.</p>
+            <button
+              onClick={handleGoRegister}
+              className="mt-4 px-6 py-3 bg-gradient-to-r from-[#ffa98f] to-[#ff8566] text-white rounded-full"
+            >
+              Cadastrar pet
+            </button>
           </div>
         ) : (
           <div className="text-center">

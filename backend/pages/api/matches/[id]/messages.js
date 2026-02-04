@@ -6,6 +6,7 @@ const { initMessageModel } = require('../../../../src/server/models/Message');
 const { getTokenFromRequest, verifyToken } = require('../../../../src/server/auth/jwt');
 const { Op } = require('sequelize');
 const { applyCors } = require('../../../../src/server/http/cors');
+const { toMessageDto, toMessageDtoList } = require('../../../../src/server/dto/message');
 
 const createSchema = z.object({
   text: z.string().min(1),
@@ -53,7 +54,7 @@ export default async function handler(req, res) {
         where: { matchId },
         order: [['createdAt', 'ASC']],
       });
-      return res.json(messages);
+      return res.json(toMessageDtoList(messages));
     }
 
     if (req.method === 'POST') {
@@ -64,7 +65,7 @@ export default async function handler(req, res) {
         text: data.text,
       });
 
-      return res.status(201).json(message);
+      return res.status(201).json(toMessageDto(message));
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
@@ -72,6 +73,10 @@ export default async function handler(req, res) {
     if (err.name === 'ZodError') {
       return res.status(400).json({ error: 'Invalid input', details: err.errors });
     }
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'Server error' });
   }
 }

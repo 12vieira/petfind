@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React, { useState, useRef } from 'react';
 import Layout from '../src/components/Layout';
 import { UserPlus } from 'lucide-react';

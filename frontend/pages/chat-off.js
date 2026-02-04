@@ -1,7 +1,9 @@
 import React from 'react';
 import Layout from '../src/components/Layout';
+import { useRouter } from 'next/router';
 
 export default function ChatOff() {
+  const router = useRouter();
   return (
     <Layout title="Chat">
       <div className="min-h-screen bg-[#FFF7F1] flex flex-col">
@@ -25,6 +27,13 @@ export default function ChatOff() {
             <h2 className="text-2xl font-normal text-[#0a0a0a] mb-4">Nenhum match ainda</h2>
 
             <p className="text-base text-[#4a5565]">Continue deslizando para encontrar o par perfeito para seu pet!</p>
+
+            <button
+              onClick={() => router.push('/match-display')}
+              className="mt-6 w-full max-w-xs mx-auto bg-gradient-to-r from-[#ffa98f] to-[#ff8566] text-white px-8 py-3 rounded-xl font-medium hover:shadow-lg transition-shadow"
+            >
+              Ir para Match
+            </button>
           </div>
         </main>
       </div>
