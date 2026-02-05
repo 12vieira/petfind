@@ -78,7 +78,7 @@ export default function PerfilTutor({
           <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
             <div className="flex justify-between mb-6">
               <h3 className="text-2xl font-bold">Informações do Tutor</h3>
-              <button onClick={handleEditarPerfil} className="flex gap-2">
+              <button onClick={handleEditarPerfil} className="flex gap-2" aria-label="Editar perfil do tutor">
                 <Edit className="size-4 text-[#FFA98F]" />
                 <span className="text-[#FFA98F]">Editar</span>
               </button>
@@ -110,10 +110,10 @@ export default function PerfilTutor({
                     </div>
 
                     <div className="flex gap-2">
-                      <button onClick={() => handleEditarPet(pet.id)}>
+                      <button onClick={() => handleEditarPet(pet.id)} aria-label={`Editar pet ${pet.nome}`}>
                         <Edit className="text-[#FFA98F]" />
                       </button>
-                      <button onClick={() => handleExcluirPet(pet.id)}>
+                      <button onClick={() => handleExcluirPet(pet.id)} aria-label={`Excluir pet ${pet.nome}`}>
                         <Trash2 className="text-[#FFA98F]" />
                       </button>
                     </div>

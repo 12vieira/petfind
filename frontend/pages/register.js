@@ -113,6 +113,8 @@ export default function Register() {
                 type="submit"
                 className="w-full bg-gradient-to-r from-[#ffa98f] to-[#ff8566] text-white py-3 rounded-xl disabled:opacity-60"
                 disabled={loading}
+                aria-disabled={loading}
+                aria-busy={loading}
               >
                 {loading ? 'Criando...' : 'Criar conta'}
               </button>
@@ -129,8 +131,8 @@ export default function Register() {
               </div>
             </form>
 
-            {message && <p className="mt-3 text-green-600">{message}</p>}
-            {error && <p className="mt-3 text-red-600">{error}</p>}
+            {message && <p className="mt-3 text-green-600" role="status" aria-live="polite">{message}</p>}
+            {error && <p className="mt-3 text-red-600" role="alert" aria-live="assertive">{error}</p>}
           </div>
         </div>
         </main>

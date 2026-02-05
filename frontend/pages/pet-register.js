@@ -31,6 +31,9 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
   });
 
   const [registroMedicoFile, setRegistroMedicoFile] = useState(null);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleMainPhotoChange = (e) => {
     const file = e.target.files?.[0];
@@ -94,6 +97,10 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setMessage('');
+    setError('');
     const form = new FormData();
     form.append('name', formData.nome);
     form.append('species', formData.especie);
@@ -105,27 +112,26 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
     if (mainPhotoFile) form.append('mainPhoto', mainPhotoFile);
     additionalPhotoFiles.filter(Boolean).forEach((file) => form.append('additionalPhotos', file));
 
-    // Persist to backend if service available, otherwise fall back to callbacks
     (async () => {
       try {
         if (createPet) {
           await createPet(form);
         }
+        setMessage('Pet cadastrado com sucesso.');
         if (onPetCadastrado) {
           onPetCadastrado(formData);
         } else if (onNavigateToInicioMatch) {
           onNavigateToInicioMatch();
+        } else if (onNavigateToMatches) {
+          onNavigateToMatches();
         } else {
-          router.push('/match-begin');
+          router.push('/match-display');
         }
       } catch (err) {
         console.error('Failed to create pet', err);
-        // still navigate or call callback so UX continues; could show toast instead
-        if (onNavigateToInicioMatch) {
-          onNavigateToInicioMatch();
-        } else {
-          router.push('/match-begin');
-        }
+        setError(err?.response?.data?.error || 'Falha ao cadastrar pet');
+      } finally {
+        setIsSubmitting(false);
       }
     })();
   };
@@ -144,7 +150,7 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
                     <div className="relative">
                       <div className="w-full h-64 bg-slate-100 rounded-xl flex items-center justify-center overflow-hidden">
                         {mainPhoto ? (
-                          <img src={mainPhoto} className="object-cover w-full h-full" alt="Main" />
+                          <img src={mainPhoto} className="object-cover w-full h-full" alt="Main" loading="lazy" decoding="async" />
                         ) : (
                           <div className="text-center text-gray-400 px-4">
                             <div className="mb-2">Foto principal</div>
@@ -171,7 +177,7 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
                       <div className="grid grid-cols-4 gap-2">
                         {additionalPhotos.map((p, i) => (
                           <div key={i} className="relative w-full pb-[100%] bg-slate-50 rounded-lg overflow-hidden">
-                            {p ? <img src={p} alt="Foto do pet" className="absolute inset-0 w-full h-full object-cover" /> : <div className="absolute inset-0 flex items-center justify-center text-gray-300">+</div>}
+                            {p ? <img src={p} alt="Foto do pet" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" /> : <div className="absolute inset-0 flex items-center justify-center text-gray-300">+</div>}
                             <input ref={(el) => (additionalPhotoRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => handleAdditionalPhotoChange(i, e)} onClick={(e) => e.stopPropagation()} className="absolute inset-0 opacity-0 cursor-pointer" />
                             {p && (
                               <button type="button" onClick={() => removeAdditionalPhoto(i)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow">
@@ -258,9 +264,14 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
 
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={() => router.back()} className="btn-secondary">Cancelar</button>
-                <button type="submit" className="btn">Cadastrar</button>
+                <button type="submit" className="btn" disabled={isSubmitting} aria-disabled={isSubmitting} aria-busy={isSubmitting}>
+                  {isSubmitting ? 'Cadastrando...' : 'Cadastrar'}
+                </button>
               </div>
             </form>
+
+            {message && <p className="mt-3 text-green-600" role="status" aria-live="polite">{message}</p>}
+            {error && <p className="mt-3 text-red-600" role="alert" aria-live="assertive">{error}</p>}
           </div>
         </main>
       </div>

@@ -113,13 +113,13 @@ export default function PetEdit({ petData: initialPetData = null }) {
             <div className="mb-6 flex items-center justify-between">
               <h2 className="section-title">Editar perfil do pet</h2>
               <div className="flex items-center gap-2">
-                <button onClick={() => router.push('/match-display')} className="size-10 rounded-lg flex items-center justify-center hover:bg-slate-50">
+                <button onClick={() => router.push('/match-display')} className="size-10 rounded-lg flex items-center justify-center hover:bg-slate-50" aria-label="Ir para Match">
                   <Heart />
                 </button>
-                <button onClick={() => router.push('/chat-on')} className="size-10 rounded-lg flex items-center justify-center hover:bg-slate-50">
+                <button onClick={() => router.push('/chat-on')} className="size-10 rounded-lg flex items-center justify-center hover:bg-slate-50" aria-label="Abrir Chat">
                   <MessageCircle />
                 </button>
-                <button onClick={() => router.push('/tutor-profile')} className="size-10 rounded-lg flex items-center justify-center hover:bg-slate-50">
+                <button onClick={() => router.push('/tutor-profile')} className="size-10 rounded-lg flex items-center justify-center hover:bg-slate-50" aria-label="Abrir Perfil">
                   <User />
                 </button>
               </div>
@@ -132,7 +132,7 @@ export default function PetEdit({ petData: initialPetData = null }) {
                     <div className="relative">
                       <div className="w-full h-64 bg-slate-100 rounded-xl flex items-center justify-center overflow-hidden">
                         {mainPhoto ? (
-                          <img src={mainPhoto} className="object-cover w-full h-full" alt="Main" />
+                          <img src={mainPhoto} className="object-cover w-full h-full" alt="Main" loading="lazy" decoding="async" />
                         ) : (
                           <div className="text-center text-gray-400 px-4">
                             <div className="mb-2">Foto principal</div>
@@ -159,7 +159,7 @@ export default function PetEdit({ petData: initialPetData = null }) {
                       <div className="grid grid-cols-4 gap-2">
                         {additionalPhotos.map((p, i) => (
                           <div key={i} className="relative w-full pb-[100%] bg-slate-50 rounded-lg overflow-hidden">
-                            {p ? <img src={p} alt="Foto do pet" className="absolute inset-0 w-full h-full object-cover" /> : <div className="absolute inset-0 flex items-center justify-center text-gray-300">+</div>}
+                            {p ? <img src={p} alt="Foto do pet" className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" /> : <div className="absolute inset-0 flex items-center justify-center text-gray-300">+</div>}
                             <input ref={(el) => (additionalPhotoRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => handleAdditionalPhotoChange(i, e)} onClick={(e) => e.stopPropagation()} className="absolute inset-0 opacity-0 cursor-pointer" />
                             {p && (
                               <button type="button" onClick={() => removeAdditionalPhoto(i)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow">

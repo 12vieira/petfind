@@ -55,9 +55,14 @@ export default function ChatOn() {
 
     let mounted = true;
     let stopped = false;
+    let timeoutId = null;
+    const POLL_MS = 4000;
 
     async function fetchMessages() {
       try {
+        if (typeof document !== 'undefined' && document.hidden) {
+          return;
+        }
         const data = await listMessages(activeConversation);
         if (!mounted) return;
         // map backend message shape to UI-friendly shape
@@ -68,18 +73,23 @@ export default function ChatOn() {
       }
     }
 
+    function scheduleNext() {
+      if (stopped) return;
+      timeoutId = setTimeout(async () => {
+        await fetchMessages();
+        scheduleNext();
+      }, POLL_MS);
+    }
+
     // initial load
     fetchMessages();
 
-    // poll every 2s
-    const id = setInterval(() => {
-      if (!stopped) fetchMessages();
-    }, 2000);
+    scheduleNext();
 
     return () => {
       mounted = false;
       stopped = true;
-      clearInterval(id);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [activeConversation]);
 
@@ -162,7 +172,7 @@ export default function ChatOn() {
                     className={`w-full text-left p-3 rounded-xl flex items-center gap-3 hover:bg-slate-50 ${activeConversation === c.id ? 'ring-2 ring-amber-200' : ''}`}
                   >
                     {c.avatar ? (
-                      <img src={c.avatar} alt={c.name} className="w-12 h-12 rounded-full object-cover" />
+                      <img src={c.avatar} alt={c.name} className="w-12 h-12 rounded-full object-cover" loading="lazy" decoding="async" />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold">
                         M
@@ -196,7 +206,7 @@ export default function ChatOn() {
               <>
                 <div className="flex items-center gap-4 border-b pb-3 mb-3">
                   {activeConv?.avatar ? (
-                    <img src={activeConv?.avatar} alt={activeConv?.name} className="w-12 h-12 rounded-full object-cover" />
+                    <img src={activeConv?.avatar} alt={activeConv?.name} className="w-12 h-12 rounded-full object-cover" loading="lazy" decoding="async" />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold">M</div>
                   )}
@@ -223,7 +233,7 @@ export default function ChatOn() {
 
                 <div className="mt-3 pt-3 border-t">
                   <div className="flex items-center gap-2">
-                    <button onClick={() => fileInputRef.current && fileInputRef.current.click()} className="p-2 rounded-lg hover:bg-slate-50">
+                    <button onClick={() => fileInputRef.current && fileInputRef.current.click()} className="p-2 rounded-lg hover:bg-slate-50" aria-label="Anexar arquivo">
                       <Paperclip />
                     </button>
                     <input ref={fileInputRef} type="file" accept="*" onChange={handleFileUpload} onClick={(e) => e.stopPropagation()} className="hidden" />
@@ -236,7 +246,7 @@ export default function ChatOn() {
                       className="flex-1 input resize-none h-12"
                     />
 
-                    <button onClick={handleSendMessage} className="btn">
+                    <button onClick={handleSendMessage} className="btn" aria-label="Enviar mensagem">
                       <Send />
                     </button>
                   </div>

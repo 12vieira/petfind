@@ -1,15 +1,15 @@
 # PetFind
 
-Projeto fullstack com React (Next.js), Next.js API (backend) e PostgreSQL.
+Projeto fullstack com React (Next.js), Express API (backend) e PostgreSQL.
 
 Estrutura inicial:
 
-- `backend` - Next.js API (auth + DB)
+- `backend` - Express API (auth + DB)
 - `frontend` - Next.js (UI)
 
 Rápido start (Windows / PowerShell):
 
-1) Backend (Next.js API)
+1) Backend (Express API)
 
 ```powershell
 cd backend
@@ -94,6 +94,12 @@ Resposta de `POST /api/pets/:id/like` (exemplo):
 ```
 
 Env de CORS:
+Backend Express (produção e dev):
+
+```powershell
+cd backend
+npm run dev
+```
 - `FRONTEND_URLS` aceita múltiplas origens separadas por vírgula.
 	Ex: `FRONTEND_URLS=http://localhost:5423,http://localhost:3000`
 

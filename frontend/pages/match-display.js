@@ -1,10 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
 import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, User, MapPin, X, Sparkles } from 'lucide-react';
 import { likePet } from '../src/services/matches';
 import { listPets } from '../src/services/pets';
 import { useRouter } from 'next/router';
 import Layout from '../src/components/Layout';
+import Image from 'next/image';
 
 export default function MatchDisplay({
   onNavigateToMatches,
@@ -25,6 +25,7 @@ export default function MatchDisplay({
   const [swipeDirection, setSwipeDirection] = useState(null);
 
   const currentProfile = pets[currentIndex];
+  const currentImageUrl = currentProfile ? getImageUrl(currentProfile) : '';
   const hasMoreProfiles = currentIndex < pets.length - 1;
   const noProfiles = !loading && !error && pets.length === 0;
 
@@ -189,8 +190,21 @@ export default function MatchDisplay({
                   : ''
               }`}
             >
-              <div className="h-96 rounded-t-2xl overflow-hidden relative">
-                <img src={getImageUrl(currentProfile)} alt={currentProfile.name || 'Pet'} className="w-full h-full object-cover" />
+              <div className="h-96 rounded-t-2xl overflow-hidden relative bg-slate-100">
+                {currentImageUrl ? (
+                  <Image
+                    src={currentImageUrl}
+                    alt={currentProfile.name || 'Pet'}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 400px"
+                    className="object-cover"
+                    priority={currentIndex === 0}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                    Sem foto
+                  </div>
+                )}
               </div>
 
               <div className="p-5">
@@ -215,11 +229,11 @@ export default function MatchDisplay({
             </div>
 
             <div className="flex justify-center gap-6 mt-6">
-              <button onClick={handleReject} className="size-16 rounded-full border-4 border-red-400 flex items-center justify-center">
+              <button onClick={handleReject} className="size-16 rounded-full border-4 border-red-400 flex items-center justify-center" aria-label="Rejeitar perfil">
                 <X className="size-8 text-red-400" />
               </button>
 
-              <button onClick={handleLike} className="size-20 rounded-full bg-gradient-to-r from-[#ffa98f] to-[#ff8566] flex items-center justify-center">
+              <button onClick={handleLike} className="size-20 rounded-full bg-gradient-to-r from-[#ffa98f] to-[#ff8566] flex items-center justify-center" aria-label="Curtir perfil">
                 <Heart className="size-10 text-white fill-white" />
               </button>
             </div>
@@ -252,7 +266,19 @@ export default function MatchDisplay({
               <h2 className="text-3xl font-bold mb-4">É um Match! 🎉</h2>
 
               <div className="flex justify-center gap-4 mb-6">
-                <img src={getImageUrl(currentMatch) || ''} alt={currentMatch?.name || 'Match'} className="size-20 rounded-full object-cover" />
+                {getImageUrl(currentMatch) ? (
+                  <Image
+                    src={getImageUrl(currentMatch)}
+                    alt={currentMatch?.name || 'Match'}
+                    width={80}
+                    height={80}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="size-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                    Sem foto
+                  </div>
+                )}
                 <Heart className="size-10 text-[#ffa98f] fill-[#ffa98f]" />
               </div>
 

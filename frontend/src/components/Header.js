@@ -37,9 +37,9 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
-            <div className="size-8">
+            <div className="w-8 h-8">
               {/* Inline fallback logo (removed external svg import) */}
-              <svg className="block size-full" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+              <svg className="block w-full h-full" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden>
                 <defs>
                   <linearGradient id="logo_grad" x1="0" x2="1">
                     <stop offset="0%" stopColor="#FFA98F" />
@@ -54,7 +54,7 @@ export default function Header() {
             </div>
 
             <h1 className="text-2xl font-bold bg-gradient-to-r from-[#ffa98f] to-[#ff8566] bg-clip-text text-transparent">
-              PetFind
+              petfind
             </h1>
           </Link>
 
@@ -62,30 +62,30 @@ export default function Header() {
           <div className="hidden md:flex items-center gap-2">
             <Link
               href="/"
-              className={`size-12 rounded-xl flex items-center justify-center transition-colors ${
+              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
                 isHome ? 'bg-[rgba(255,169,143,0.13)] hover:bg-[rgba(255,169,143,0.2)]' : 'hover:bg-gray-50'
               }`}
               aria-label="Início"
             >
-              <Home className={`size-6 ${isHome ? 'text-[#FFA98F]' : 'text-[#4A5565]'}`} />
+              <Home className={`w-6 h-6 ${isHome ? 'text-[#FFA98F]' : 'text-[#4A5565]'}`} />
             </Link>
             <Link
               href="/chat-on"
-              className={`size-12 rounded-xl flex items-center justify-center transition-colors ${
+              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
                 isChat ? 'bg-[rgba(255,169,143,0.13)] hover:bg-[rgba(255,169,143,0.2)]' : 'hover:bg-gray-50'
               }`}
               aria-label="Chat"
             >
-              <MessageCircle className={`size-6 ${isChat ? 'text-[#FFA98F]' : 'text-[#4A5565]'}`} />
+              <MessageCircle className={`w-6 h-6 ${isChat ? 'text-[#FFA98F]' : 'text-[#4A5565]'}`} />
             </Link>
             <Link
               href="/tutor-profile"
-              className={`size-12 rounded-xl flex items-center justify-center transition-colors ${
+              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
                 isProfile ? 'bg-[rgba(255,169,143,0.13)] hover:bg-[rgba(255,169,143,0.2)]' : 'hover:bg-gray-50'
               }`}
               aria-label="Perfil"
             >
-              <User className={`size-6 ${isProfile ? 'text-[#FFA98F]' : 'text-[#4A5565]'}`} />
+              <User className={`w-6 h-6 ${isProfile ? 'text-[#FFA98F]' : 'text-[#4A5565]'}`} />
             </Link>
           </div>
         </div>

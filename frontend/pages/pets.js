@@ -153,7 +153,7 @@ export default function Pets() {
                   <div className="relative">
                     <div className="w-full h-44 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer">
                       {mainPhoto ? (
-                        <img src={mainPhoto} alt="main" className="object-cover w-full h-full" />
+                        <img src={mainPhoto} alt="main" className="object-cover w-full h-full" loading="lazy" decoding="async" />
                       ) : (
                         <div className="flex flex-col items-center gap-2 text-sm text-gray-400">
                           <div className="w-12 h-12 rounded-full bg-[rgba(255,168,143,0.12)] flex items-center justify-center">
@@ -199,7 +199,7 @@ export default function Pets() {
                   <div className="flex gap-3 mt-2">
                     {additionalPhotos.map((p, idx) => (
                       <div key={idx} className="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden relative">
-                        {p ? <img src={p} alt={`add-${idx}`} className="w-full h-full object-cover" /> : <div className="flex items-center justify-center h-full text-gray-300">+</div>}
+                        {p ? <img src={p} alt={`add-${idx}`} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : <div className="flex items-center justify-center h-full text-gray-300">+</div>}
                         <input ref={(el) => (additionalPhotoRefs.current[idx] = el)} type="file" accept="image/*" onChange={(e) => handleAdditionalPhotoChange(idx, e)} onClick={(e) => e.stopPropagation()} className="absolute inset-0 opacity-0 cursor-pointer" />
                         {p && <button type="button" onClick={() => removeAdditionalPhoto(idx)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow"><X className="size-3 text-gray-600" /></button>}
                       </div>
@@ -209,14 +209,31 @@ export default function Pets() {
               </div>
 
               <div className="flex gap-3">
-                <button type="button" onClick={() => { setFormData({ nome: '', especie: 'cachorro', idade: '', sexo: 'macho', raca: '', objetivo: 'amizades', breedingEnabled: false, pedigree: '', registroMedico: '', biografia: '' }); setMainPhoto(null); setAdditionalPhotos([null, null, null, null]); }} className="btn-secondary flex-1">Limpar</button>
-                <button type="submit" className="btn flex-1" disabled={isSubmitting}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({ nome: '', especie: 'cachorro', idade: '', sexo: 'macho', raca: '', objetivo: 'amizades', breedingEnabled: false, pedigree: '', registroMedico: '', biografia: '' });
+                    setMainPhoto(null);
+                    setMainPhotoFile(null);
+                    setAdditionalPhotos([null, null, null, null]);
+                    setAdditionalPhotoFiles([null, null, null, null]);
+                    if (mainPhotoInputRef.current) mainPhotoInputRef.current.value = '';
+                    additionalPhotoRefs.current.forEach((ref) => { if (ref) ref.value = ''; });
+                    if (registroMedicoInputRef.current) registroMedicoInputRef.current.value = '';
+                    setMessage('');
+                    setError('');
+                  }}
+                  className="btn-secondary flex-1"
+                >
+                  Limpar
+                </button>
+                <button type="submit" className="btn flex-1" disabled={isSubmitting} aria-disabled={isSubmitting} aria-busy={isSubmitting}>
                   {isSubmitting ? 'Cadastrando...' : 'Cadastrar pet'}
                 </button>
               </div>
 
-              {message && <p className="mt-3 text-green-600">{message}</p>}
-              {error && <p className="mt-3 text-red-600">{error}</p>}
+              {message && <p className="mt-3 text-green-600" role="status" aria-live="polite">{message}</p>}
+              {error && <p className="mt-3 text-red-600" role="alert" aria-live="assertive">{error}</p>}
             </form>
           </div>
         </div>

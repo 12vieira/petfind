@@ -95,7 +95,7 @@ export default function PetDetails({ petData }) {
                     className="relative w-full h-44 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer"
                   >
                     {mainPhoto ? (
-                      <img src={mainPhoto} alt="main" className="object-cover w-full h-full" />
+                      <img src={mainPhoto} alt="main" className="object-cover w-full h-full" loading="lazy" decoding="async" />
                     ) : (
                       <div className="flex flex-col items-center gap-2 text-sm text-gray-400">
                         <div className="w-12 h-12 rounded-full bg-[rgba(255,168,143,0.12)] flex items-center justify-center">
@@ -142,7 +142,7 @@ export default function PetDetails({ petData }) {
                   <div className="flex gap-3 mt-2">
                     {additionalPhotos.map((p, idx) => (
                       <div key={idx} className="w-20 h-20 bg-gray-50 rounded-xl overflow-hidden relative">
-                        {p ? <img src={p} alt={`add-${idx}`} className="w-full h-full object-cover" /> : <div className="flex items-center justify-center h-full text-gray-300">+</div>}
+                        {p ? <img src={p} alt={`add-${idx}`} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : <div className="flex items-center justify-center h-full text-gray-300">+</div>}
                         <input ref={(el) => (additionalPhotoRefs.current[idx] = el)} type="file" accept="image/*" onChange={(e) => handleAdditionalPhotoChange(idx, e)} className="absolute inset-0 opacity-0 cursor-pointer" />
                         {p && <button type="button" onClick={() => removeAdditionalPhoto(idx)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow"><X className="size-3 text-gray-600" /></button>}
                       </div>
