@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { registerUser } from '../src/services/auth';
 import { useRouter } from 'next/router';
 import Layout from '../src/components/Layout';
@@ -13,13 +13,15 @@ export default function Register() {
     senha: '',
     confirmarSenha: '',
     telefone: '',
-    estado: '',
-    siglaEstado: ''
+    cidade: '',
+    estado: 'DF',
+    foto: null,
   });
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,9 +35,19 @@ export default function Register() {
 
     setLoading(true);
     try {
-      await registerUser({ name: formData.nome, email: formData.email, password: formData.senha });
+      const payload = {
+        name: formData.nome,
+        email: formData.email,
+        password: formData.senha,
+        telefone: formData.telefone || undefined,
+        cidade: formData.cidade || undefined,
+        estado: formData.estado || undefined,
+        foto: formData.foto || undefined,
+      };
+
+      await registerUser(payload);
       setMessage('Cadastro realizado. Você será redirecionado para entrar.');
-      setFormData({ nome: '', email: '', senha: '', confirmarSenha: '', telefone: '', estado: '', siglaEstado: '' });
+      setFormData({ nome: '', email: '', senha: '', confirmarSenha: '', telefone: '', cidade: '', estado: 'DF', foto: null });
       setTimeout(() => router.push('/login'), 1200);
     } catch (err) {
       setError(err?.response?.data?.error || 'Falha no cadastro');
@@ -47,6 +59,79 @@ export default function Register() {
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  const fotoInputRef = useRef(null);
+  const handleFotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setFormData((prev) => ({ ...prev, foto: reader.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setFormData((prev) => ({ ...prev, foto: reader.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const goToNextStep = () => {
+    setError('');
+    // basic validation for step 1
+    if (!formData.nome || !formData.email || !formData.senha || !formData.confirmarSenha) {
+      setError('Preencha nome, email e senha antes de continuar.');
+      return;
+    }
+    if (formData.senha !== formData.confirmarSenha) {
+      setError('As senhas não coincidem.');
+      return;
+    }
+    setStep(2);
+  };
+
+  const goToPrevStep = () => {
+    setError('');
+    setStep(1);
+  };
+
+  const estados = [
+    { sigla: 'AC', nome: 'Acre' },
+    { sigla: 'AL', nome: 'Alagoas' },
+    { sigla: 'AP', nome: 'Amapá' },
+    { sigla: 'AM', nome: 'Amazonas' },
+    { sigla: 'BA', nome: 'Bahia' },
+    { sigla: 'CE', nome: 'Ceará' },
+    { sigla: 'DF', nome: 'Distrito Federal' },
+    { sigla: 'ES', nome: 'Espírito Santo' },
+    { sigla: 'GO', nome: 'Goiás' },
+    { sigla: 'MA', nome: 'Maranhão' },
+    { sigla: 'MT', nome: 'Mato Grosso' },
+    { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+    { sigla: 'MG', nome: 'Minas Gerais' },
+    { sigla: 'PA', nome: 'Pará' },
+    { sigla: 'PB', nome: 'Paraíba' },
+    { sigla: 'PR', nome: 'Paraná' },
+    { sigla: 'PE', nome: 'Pernambuco' },
+    { sigla: 'PI', nome: 'Piauí' },
+    { sigla: 'RJ', nome: 'Rio de Janeiro' },
+    { sigla: 'RN', nome: 'Rio Grande do Norte' },
+    { sigla: 'RS', nome: 'Rio Grande do Sul' },
+    { sigla: 'RO', nome: 'Rondônia' },
+    { sigla: 'RR', nome: 'Roraima' },
+    { sigla: 'SC', nome: 'Santa Catarina' },
+    { sigla: 'SP', nome: 'São Paulo' },
+    { sigla: 'SE', nome: 'Sergipe' },
+    { sigla: 'TO', nome: 'Tocantins' },
+  ];
 
   const onNavigateToHome = () => router.push('/');
   const onNavigateToLogin = () => router.push('/login');
@@ -71,53 +156,125 @@ export default function Register() {
 
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 ">
             <form onSubmit={handleSubmit} className="space-y-5">
-              <input
-                type="text"
-                placeholder="Nome completo"
-                value={formData.nome}
-                onChange={(e) => handleChange('nome', e.target.value)}
-                className="w-full px-4 py-3 border rounded-xl border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff8566]"
-                required
-              />
+              {step === 1 && (
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Nome completo"
+                    value={formData.nome}
+                    onChange={(e) => handleChange('nome', e.target.value)}
+                    className="w-full px-4 py-3 border rounded-xl border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff8566]"
+                    required
+                  />
 
-              <input
-                type="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                className="w-full px-4 py-3 border rounded-xl border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff8566]"
-                required
-              />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={formData.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
+                    className="w-full px-4 py-3 border rounded-xl border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff8566]"
+                    required
+                  />
 
-              <input
-                type="password"
-                placeholder="Senha"
-                value={formData.senha}
-                onChange={(e) => handleChange('senha', e.target.value)}
-                className="w-full px-4 py-3 border rounded-xl border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff8566]"
-                minLength={6}
-                required
-              />
+                  <input
+                    type="password"
+                    placeholder="Senha"
+                    value={formData.senha}
+                    onChange={(e) => handleChange('senha', e.target.value)}
+                    className="w-full px-4 py-3 border rounded-xl border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff8566]"
+                    minLength={6}
+                    required
+                  />
 
-              <input
-                type="password"
-                placeholder="Confirmar senha"
-                value={formData.confirmarSenha}
-                onChange={(e) => handleChange('confirmarSenha', e.target.value)}
-                className="w-full px-4 py-3 border rounded-xl border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff8566] "
-                minLength={6}
-                required
-              />
+                  <input
+                    type="password"
+                    placeholder="Confirmar senha"
+                    value={formData.confirmarSenha}
+                    onChange={(e) => handleChange('confirmarSenha', e.target.value)}
+                    className="w-full px-4 py-3 border rounded-xl border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff8566] "
+                    minLength={6}
+                    required
+                  />
 
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-[#ffa98f] to-[#ff8566] text-white py-3 rounded-xl disabled:opacity-60"
-                disabled={loading}
-                aria-disabled={loading}
-                aria-busy={loading}
-              >
-                {loading ? 'Criando...' : 'Criar conta'}
-              </button>
+                  <div className="flex gap-4">
+                    <button type="button" onClick={goToNextStep} className="flex-1 bg-gradient-to-r from-[#ffa98f] to-[#ff8566] text-white py-3 rounded-xl">Próximo</button>
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Telefone"
+                    value={formData.telefone}
+                    onChange={(e) => handleChange('telefone', e.target.value)}
+                    className="w-full px-4 py-3 border rounded-xl border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff8566]"
+                  />
+
+                  <input
+                    type="text"
+                    placeholder="Cidade"
+                    value={formData.cidade}
+                    onChange={(e) => handleChange('cidade', e.target.value)}
+                    className="w-full px-4 py-3 border rounded-xl border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff8566]"
+                  />
+
+                  <select
+                    value={formData.estado}
+                    onChange={(e) => handleChange('estado', e.target.value)}
+                    className="w-full px-4 py-3 border rounded-xl border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#ff8566]"
+                  >
+                    {estados.map((estado) => (
+                      <option key={estado.sigla} value={estado.sigla}>{estado.nome}</option>
+                    ))}
+                  </select>
+
+                  <div>
+                    <input ref={fotoInputRef} type="file" accept="image/*" onChange={handleFotoChange} className="hidden" />
+
+                    <div
+                      onClick={() => fotoInputRef.current && fotoInputRef.current.click()}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter') fotoInputRef.current && fotoInputRef.current.click(); }}
+                      className="w-full flex items-center gap-4 p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors border-gray-200 border-opacity-60 hover:border-[#ffd1c1] bg-white/50"
+                    >
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#ffa98f] to-[#ff8566] flex items-center justify-center overflow-hidden">
+                        {formData.foto ? (
+                          <img src={formData.foto} alt="Miniatura" className="w-full h-full object-cover" />
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" className="w-8 h-8">
+                            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" />
+                            <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M16 3h-8v4H5" />
+                            <circle cx="12" cy="13" r="3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="font-medium">{formData.foto ? 'Foto selecionada' : 'Arraste sua foto ou clique para escolher'}</div>
+                        <div className="text-sm text-gray-500">PNG, JPG ou GIF — menor que 5MB</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <button type="button" onClick={goToPrevStep} className="flex-1 bg-white py-3 rounded-xl">Voltar</button>
+                    <button
+                      type="submit"
+                      className="flex-1 bg-gradient-to-r from-[#ffa98f] to-[#ff8566] text-white py-3 rounded-xl disabled:opacity-60"
+                      disabled={loading}
+                      aria-disabled={loading}
+                      aria-busy={loading}
+                    >
+                      {loading ? 'Criando...' : 'Criar conta'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="text-center text-sm">
                 Já tem uma conta?{' '}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Layout from '../src/components/Layout';
-import { loginUser } from '../src/services/auth';
+import { loginUser, getMe } from '../src/services/auth';
+import { listPets } from '../src/services/pets';
 import { useRouter } from 'next/router';
 import { ArrowLeft } from 'lucide-react';
 
@@ -22,8 +23,20 @@ export default function Login() {
     try {
       await loginUser({ email, password });
       setMessage('Login realizado.');
-      // navegar para pets (ou página de matches)
-      router.push('/pets');
+      // após login, checar se usuário já tem pets e direcionar
+      try {
+        const user = await getMe();
+        const allPets = await listPets();
+        const myPets = Array.isArray(allPets) ? allPets.filter(p => p.ownerId === user.id) : [];
+        if (myPets.length > 0) {
+          router.push('/tutor-profile');
+        } else {
+          router.push('/pet-register');
+        }
+      } catch (e) {
+        // fallback
+        router.push('/pets');
+      }
     } catch (err) {
       setError(err?.response?.data?.error || 'Falha no login');
     } finally {

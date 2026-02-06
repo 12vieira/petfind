@@ -3,12 +3,32 @@ import React, { useState, useRef } from 'react';
 import Layout from '../src/components/Layout';
 import { UserPlus } from 'lucide-react';
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
+import { getMe } from '../src/services/auth';
 
 export default function TutorEdit({ tutorData = null, onSalvar, onNavigateToMatches, onNavigateToChat, onNavigateToPerfil }) {
   const router = useRouter();
 
   const initial = tutorData || {};
-  const [foto, setFoto] = useState(initial.foto || null);
+  function resolvePhoto(val) {
+    if (!val) return null;
+    if (typeof val === 'object') {
+      return val.url || val.path || val.publicUrl || null;
+    }
+    if (typeof val === 'string') {
+      // data URLs or absolute URLs are fine
+      if (val.startsWith('data:') || val.startsWith('http')) return val;
+      // relative path from API
+      if (val.startsWith('/')) {
+        const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        return `${base.replace(/\/$/, '')}${val}`;
+      }
+      return val;
+    }
+    return null;
+  }
+
+  const [foto, setFoto] = useState(resolvePhoto(initial.foto) || null);
   const fotoInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -18,6 +38,33 @@ export default function TutorEdit({ tutorData = null, onSalvar, onNavigateToMatc
     cidade: initial.cidade || '',
     estado: initial.estado || 'SP',
   });
+
+  useEffect(() => {
+    let mounted = true;
+    if (tutorData) return undefined;
+
+    (async () => {
+      try {
+        const user = await getMe().catch(() => null);
+        if (!mounted || !user) return;
+
+        // Normalize fields: backend may return 'name' or 'nome'
+        const nome = user.nome || user.name || '';
+        const email = user.email || '';
+        const telefone = user.telefone || user.phone || '';
+        const cidade = user.cidade || user.city || '';
+        const estado = user.estado || user.state || 'SP';
+        const fotoValue = user.foto || user.photo || user.photoUrl || null;
+
+        setFormData({ nome, email, telefone, cidade, estado });
+        setFoto(resolvePhoto(fotoValue) || null);
+      } catch (err) {
+        // ignore
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, [tutorData]);
 
   const handleFotoChange = (e) => {
     const file = e.target.files?.[0];

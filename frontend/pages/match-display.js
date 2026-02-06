@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, User, MapPin, X, Sparkles } from 'lucide-react';
-import { likePet } from '../src/services/matches';
+import { likePet, listMatches } from '../src/services/matches';
 import { listPets } from '../src/services/pets';
+import { getMe } from '../src/services/auth';
+import PetSelectionModal from '../src/components/PetSelectionModal';
+import { useActivePet } from '../src/context/ActivePetContext';
 import { useRouter } from 'next/router';
 import Layout from '../src/components/Layout';
 import Image from 'next/image';
@@ -15,6 +18,7 @@ export default function MatchDisplay({
   currentPetId // id of the user's active pet used when liking other profiles
 }) {
   const router = useRouter();
+  const { activePetId: ctxActivePetId } = useActivePet();
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,6 +27,7 @@ export default function MatchDisplay({
   const [showMatchNotification, setShowMatchNotification] = useState(false);
   const [currentMatch, setCurrentMatch] = useState(null);
   const [swipeDirection, setSwipeDirection] = useState(null);
+  const [knownMatchIds, setKnownMatchIds] = useState(new Set());
 
   const currentProfile = pets[currentIndex];
   const currentImageUrl = currentProfile ? getImageUrl(currentProfile) : '';
@@ -35,8 +40,18 @@ export default function MatchDisplay({
     async function fetchPets() {
       setLoading(true);
       try {
-        const data = await listPets();
-        if (mounted) setPets(Array.isArray(data) ? data : []);
+        const [data, user] = await Promise.all([listPets(), getMe().catch(() => null)]);
+        let items = Array.isArray(data) ? data : [];
+
+        // filter out pets that belong to the current logged-in user
+        if (user && user.id != null) {
+          items = items.filter((p) => {
+            const owner = p.ownerId ?? p.owner_id ?? p.userId ?? (p.owner && p.owner.id) ?? null;
+            return owner !== user.id;
+          });
+        }
+
+        if (mounted) setPets(items);
       } catch (err) {
         console.error('Error loading pets', err);
         if (mounted) setError(err);
@@ -83,6 +98,32 @@ export default function MatchDisplay({
     return '';
   }
 
+  function formatBreed(profile) {
+    return profile.raca || profile.breed || profile.breedName || '-';
+  }
+
+  function formatSex(profile) {
+    if (!profile) return '-';
+    const s = profile.sexo || profile.sex || profile.gender || '';
+    if (!s) return '-';
+    if (s.toLowerCase() === 'macho' || s.toLowerCase() === 'male') return 'Macho';
+    if (s.toLowerCase() === 'femea' || s.toLowerCase() === 'fêmea' || s.toLowerCase() === 'female') return 'Fêmea';
+    return s;
+  }
+
+  function getLocation(profile) {
+    if (!profile) return 'Localização não informada';
+    const city = profile.cidade || profile.city || profile.cityName || null;
+    const neighborhood = profile.bairro || profile.neighborhood || profile.district || null;
+
+    if (city && neighborhood) return `${city} • ${neighborhood}`;
+    if (city) return city;
+    if (neighborhood) return neighborhood;
+    // fallback to generic location field
+    if (profile.location) return profile.location;
+    return 'Localização não informada';
+  }
+
   const handleSwipe = async (direction) => {
     if (!currentProfile) return;
 
@@ -90,9 +131,11 @@ export default function MatchDisplay({
 
     // If user swiped right, notify backend of the like. Backend will create a match
     // if the other side already liked this pet.
-    if (direction === 'right' && currentPetId) {
+    const fromPetId = currentPetId ?? ctxActivePetId;
+
+    if (direction === 'right' && fromPetId) {
       try {
-        const resp = await likePet(currentProfile.id, currentPetId);
+        const resp = await likePet(currentProfile.id, fromPetId);
 
         // Determine if backend reported a match. Be permissive about response shape.
         const matched = !!(
@@ -105,17 +148,23 @@ export default function MatchDisplay({
         );
 
         if (matched || currentProfile?.hasLikedYou) {
-          setCurrentMatch(resp.match || resp || currentProfile);
+          const matchObj = resp.match || resp || currentProfile;
+          setCurrentMatch(matchObj);
           setShowMatchNotification(true);
 
           if (onMatch) {
-            onMatch(resp.match || { id: currentProfile.id, petProfile: currentProfile, timestamp: new Date() });
+            onMatch(matchObj || { id: currentProfile.id, petProfile: currentProfile, timestamp: new Date() });
           }
+
+          // open chat automatically shortly after showing the match notification
+          setTimeout(() => {
+            try { handleChatFromMatch(); } catch (e) { /* ignore */ }
+          }, 1200);
         }
       } catch (err) {
         // ignore for now; could show a toast later
       }
-    } else if (direction === 'right' && !currentPetId) {
+    } else if (direction === 'right' && !fromPetId) {
       // when we don't have an active pet id, keep the previous local behavior
       if (currentProfile?.hasLikedYou) {
         setCurrentMatch(currentProfile);
@@ -148,6 +197,50 @@ export default function MatchDisplay({
     router.push('/chat-on');
   };
 
+  // Poll for new matches and notify + open chat when a new match appears
+  useEffect(() => {
+    let mounted = true;
+    let timer = null;
+
+    async function init() {
+      try {
+        const data = await listMatches().catch(() => []);
+        if (!mounted) return;
+        const ids = new Set((Array.isArray(data) ? data : []).map((m) => m.id || m._id).filter(Boolean));
+        setKnownMatchIds(ids);
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    async function poll() {
+      try {
+        const data = await listMatches().catch(() => []);
+        if (!mounted || !Array.isArray(data)) return;
+        for (const m of data) {
+          const id = m.id || m._id;
+          if (!id) continue;
+          if (!knownMatchIds.has(id)) {
+            // new match
+            setKnownMatchIds((prev) => new Set(Array.from(prev).concat([id])));
+            if (!mounted) return;
+            setCurrentMatch(m);
+            setShowMatchNotification(true);
+            setTimeout(() => { try { handleChatFromMatch(); } catch (e) {} }, 1200);
+            break;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    init();
+    timer = setInterval(poll, 5000);
+
+    return () => { mounted = false; if (timer) clearInterval(timer); };
+  }, [knownMatchIds]);
+
   const handleGoMatches = () => {
     if (onNavigateToMatches) return onNavigateToMatches();
     router.push('/matches');
@@ -171,6 +264,7 @@ export default function MatchDisplay({
     <Layout title="Match">
       <div className="min-h-screen bg-[#FFF7F1] flex flex-col">
         <main className="flex-1 flex items-center justify-center px-4 py-8">
+        <PetSelectionModal />
         {loading ? (
           <div className="text-center">
             <p className="text-gray-500">Carregando perfis...</p>
@@ -213,15 +307,21 @@ export default function MatchDisplay({
                 </h2>
 
                 <div className="flex items-center gap-2 text-sm text-[#4a5565]">
-                  <MapPin className="size-4" />
-                  {currentProfile.location || 'Localização não informada'}
+                  <MapPin className="w-4 h-4" />
+                  {getLocation(currentProfile)}
+                </div>
+
+                <div className="mt-2 flex items-center gap-3 text-sm text-[#4a5565]">
+                  <div><strong>Raça:</strong> {formatBreed(currentProfile)}</div>
+                  <div>•</div>
+                  <div><strong>Sexo:</strong> {formatSex(currentProfile)}</div>
                 </div>
 
                 <p className="mt-3 text-sm">{currentProfile.description || 'Sem descrição.'}</p>
 
                 {currentProfile.hasLikedYou && (
                   <div className="mt-3 flex items-center gap-1 text-[#ffa98f]">
-                    <Sparkles className="size-4" />
+                    <Sparkles className="w-4 h-4" />
                     <span className="text-xs">Curtiu você!</span>
                   </div>
                 )}
@@ -229,12 +329,12 @@ export default function MatchDisplay({
             </div>
 
             <div className="flex justify-center gap-6 mt-6">
-              <button onClick={handleReject} className="size-16 rounded-full border-4 border-red-400 flex items-center justify-center" aria-label="Rejeitar perfil">
-                <X className="size-8 text-red-400" />
+              <button onClick={handleReject} className="w-16 h-16 rounded-full border-4 border-red-400 flex items-center justify-center" aria-label="Rejeitar perfil">
+                <X className="w-8 h-8 text-red-400" />
               </button>
 
-              <button onClick={handleLike} className="size-20 rounded-full bg-gradient-to-r from-[#ffa98f] to-[#ff8566] flex items-center justify-center" aria-label="Curtir perfil">
-                <Heart className="size-10 text-white fill-white" />
+              <button onClick={handleLike} className="w-20 h-20 rounded-full bg-gradient-to-r from-[#ffa98f] to-[#ff8566] flex items-center justify-center" aria-label="Curtir perfil">
+                <Heart className="w-10 h-10 text-white fill-white" />
               </button>
             </div>
           </div>
@@ -275,11 +375,11 @@ export default function MatchDisplay({
                     className="rounded-full object-cover"
                   />
                 ) : (
-                  <div className="size-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                  <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
                     Sem foto
                   </div>
                 )}
-                <Heart className="size-10 text-[#ffa98f] fill-[#ffa98f]" />
+                <Heart className="w-10 h-10 text-[#ffa98f] fill-[#ffa98f]" />
               </div>
 
               <div className="flex gap-3">

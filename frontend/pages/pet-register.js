@@ -120,12 +120,13 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
         setMessage('Pet cadastrado com sucesso.');
         if (onPetCadastrado) {
           onPetCadastrado(formData);
-        } else if (onNavigateToInicioMatch) {
+        }
+        if (onNavigateToInicioMatch) {
           onNavigateToInicioMatch();
         } else if (onNavigateToMatches) {
           onNavigateToMatches();
         } else {
-          router.push('/match-display');
+          router.push('/tutor-profile');
         }
       } catch (err) {
         console.error('Failed to create pet', err);
@@ -206,7 +207,7 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
                       </div>
 
                       <div>
-                        <label className="label">Idade (meses)</label>
+                        <label className="label">Idade (anos)</label>
                         <input value={formData.idade} onChange={(e) => handleChange('idade', e.target.value)} className="input" placeholder="0" />
                       </div>
 
@@ -228,7 +229,6 @@ export default function PetRegister({ onPetCadastrado, onNavigateToInicioMatch, 
                         <select value={formData.objetivo} onChange={(e) => handleChange('objetivo', e.target.value)} className="input">
                           <option value="amizades">Amizades</option>
                           <option value="encontros">Encontros</option>
-                          <option value="adocao">Adoção</option>
                         </select>
                       </div>
 

@@ -26,6 +26,22 @@ function initUserModel(sequelize) {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      telefone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      cidade: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      estado: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      foto: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
     },
     {
       tableName: 'users',

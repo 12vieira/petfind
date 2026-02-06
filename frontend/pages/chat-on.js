@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../src/components/Layout';
 import { listMessages, sendMessage, listMatches } from '../src/services/matches';
+import { useActivePet } from '../src/context/ActivePetContext';
 
 export default function ChatOn() {
   const router = useRouter();
@@ -19,6 +20,8 @@ export default function ChatOn() {
   // `conversations` will be loaded from backend via `listMatches()`
 
   const [messages, setMessages] = useState([]);
+
+  const { activePetId } = useActivePet();
 
   const activeConv = conversations.find((c) => c.id === activeConversation);
 
@@ -66,7 +69,30 @@ export default function ChatOn() {
         const data = await listMessages(activeConversation);
         if (!mounted) return;
         // map backend message shape to UI-friendly shape
-        const mapped = data.map((m) => ({ id: m.id, text: m.text, time: new Date(m.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), isSent: m.senderId === null ? false : true, raw: m }));
+        const prevMap = new Map(messages.map((mm) => [mm.id, mm.isSent]));
+        const mapped = data.map((m) => {
+          // prefer senderPetId (pet id) when present; fall back to older shapes
+          const sender = m.senderPetId ?? m.senderId ?? m.fromPetId ?? (m.sender && (m.sender.petId ?? m.sender.id)) ?? null;
+
+          let isSent;
+          if (sender != null && activePetId != null) {
+            isSent = String(sender) === String(activePetId);
+          } else if (prevMap.has(m.id)) {
+            // preserve previous alignment when backend doesn't provide sender info reliably
+            isSent = prevMap.get(m.id);
+          } else {
+            // fallback: if sender explicitly null treat as received, otherwise false
+            isSent = false;
+          }
+
+          return {
+            id: m.id,
+            text: m.text,
+            time: new Date(m.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            isSent,
+            raw: m,
+          };
+        });
         setMessages(mapped);
       } catch (err) {
         console.error('Failed to load messages', err);

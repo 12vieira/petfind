@@ -96,7 +96,22 @@ router.get('/:id/messages', async (req, res) => {
       order: [['createdAt', 'ASC']],
     });
 
-    return res.json(toMessageDtoList(messages));
+    // Resolve which pet (petA or petB) corresponds to the message sender
+    const petA = await Pet.findByPk(match.petAId);
+    const petB = await Pet.findByPk(match.petBId);
+
+    const enriched = messages.map((m) => {
+      const dto = toMessageDto(m);
+      const senderUserId = dto.senderId;
+      let senderPetId = null;
+
+      if (petA && petA.ownerId === senderUserId) senderPetId = petA.id;
+      else if (petB && petB.ownerId === senderUserId) senderPetId = petB.id;
+
+      return Object.assign({}, dto, { senderPetId });
+    });
+
+    return res.json(enriched);
   } catch (err) {
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Invalid or expired token' });
@@ -150,7 +165,15 @@ router.post('/:id/messages', async (req, res) => {
       text: data.text,
     });
 
-    return res.status(201).json(toMessageDto(message));
+    // Return the created message with a consistent senderPetId field
+    const petA = await Pet.findByPk(match.petAId);
+    const petB = await Pet.findByPk(match.petBId);
+    const baseDto = toMessageDto(message);
+    let senderPetId = null;
+    if (petA && petA.ownerId === payload.id) senderPetId = petA.id;
+    else if (petB && petB.ownerId === payload.id) senderPetId = petB.id;
+
+    return res.status(201).json(Object.assign({}, baseDto, { senderPetId }));
   } catch (err) {
     if (err.name === 'ZodError') {
       return res.status(400).json({ error: 'Invalid input', details: err.errors });
